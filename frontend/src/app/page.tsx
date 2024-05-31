@@ -2,6 +2,18 @@
 
 import React, { useRef, useState, MouseEvent } from 'react';
 import Editor from "@monaco-editor/react";
+import axios from 'axios';
+
+interface Output {
+  output: string;
+  stdout: string;
+  stderr: string;
+  execution_time: string;
+}
+
+interface ExecutionError {
+  error: string;
+}
 
 const App: React.FC = () => {
   const [code, setCode] = useState<string>("# Write your code below!\nprint('Hello World!')");
@@ -30,15 +42,37 @@ const App: React.FC = () => {
     document.removeEventListener('mouseup', handleMouseUp as EventListener);
   };
 
-  const handleTestCode = () => {
+  const handleTestCode = async () => {
     console.log('Test Code button clicked');
-    // Add your run logic here
-    console.log('Code to run:', code);
+  
+    try {
+      const response = await axios.post<Output>("http://localhost:8000/test", { code });
+      setOutputContent(outputContent + "\n" + (response.data.stdout ? response.data.stdout + "\n" : '\n') + (response.data.stderr ? response.data.stderr + "\n" : '\n'));
+      console.log('Output:', response.data.output);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setOutputContent(outputContent + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        console.error('Axios error:', error.response?.data);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log('Submit button clicked');
-    // Add your submit logic here
+    try {
+      const response = await axios.post<Output>("http://localhost:8000/submit", { code });
+      setOutputContent(outputContent + "\n" + (response.data.stdout ? response.data.stdout : '') + "\n" + (response.data.stderr ? response.data.stderr : ''));
+      console.log('Output:', response.data.output);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setOutputContent(outputContent + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        console.error('Axios error:', error.response?.data);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    }
   };
 
   const handleClearBuffer = () => {
@@ -120,7 +154,8 @@ const App: React.FC = () => {
             position: 'relative',
             backgroundColor: '#282c34',
             color: '#fff',
-            overflow: 'auto'
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap', // Preserves whitespace and newlines
           }}
         >
           <div style={{ padding: '40px 10px 10px 10px', fontFamily: "Courier New" }}>
