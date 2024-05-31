@@ -4,6 +4,7 @@ import React, { useRef, useState, MouseEvent } from 'react';
 import Editor from "@monaco-editor/react";
 import axios from 'axios';
 
+// Define the shape of the output response
 interface Output {
   output: string;
   stdout: string;
@@ -11,6 +12,7 @@ interface Output {
   execution_time: string;
 }
 
+// Define the shape of the error response
 interface ExecutionError {
   error: string;
 }
@@ -22,6 +24,7 @@ const App: React.FC = () => {
   const isResizing = useRef<boolean>(false);
   const lastY = useRef<number>(0);
 
+  // Handle mouse down event for resizing output area
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     isResizing.current = true;
     lastY.current = e.clientY;
@@ -29,6 +32,7 @@ const App: React.FC = () => {
     document.addEventListener('mouseup', handleMouseUp as EventListener);
   };
 
+  // Handle mouse move event to resize the output area
   const handleMouseMove = (e: globalThis.MouseEvent) => {
     if (!isResizing.current) return;
     const deltaY = e.clientY - lastY.current;
@@ -36,22 +40,24 @@ const App: React.FC = () => {
     lastY.current = e.clientY;
   };
 
+  // Handle mouse up event to stop resizing
   const handleMouseUp = () => {
     isResizing.current = false;
     document.removeEventListener('mousemove', handleMouseMove as EventListener);
     document.removeEventListener('mouseup', handleMouseUp as EventListener);
   };
 
+  // Handle the "Test Code" button click
   const handleTestCode = async () => {
     console.log('Test Code button clicked');
   
     try {
       const response = await axios.post<Output>("http://localhost:8000/test", { code });
-      setOutputContent(outputContent + "\n" + (response.data.stdout ? response.data.stdout + "\n" : '\n') + (response.data.stderr ? response.data.stderr + "\n" : '\n'));
+      setOutputContent(prev => prev + "\n" + (response.data.stdout ? response.data.stdout + "\n" : '\n') + (response.data.stderr ? response.data.stderr + "\n" : '\n'));
       console.log('Output:', response.data.output);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setOutputContent(outputContent + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        setOutputContent(prev => prev + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
         console.error('Axios error:', error.response?.data);
       } else {
         console.error('Unexpected error:', error);
@@ -59,15 +65,16 @@ const App: React.FC = () => {
     }
   };
 
+  // Handle the "Submit" button click
   const handleSubmit = async () => {
     console.log('Submit button clicked');
     try {
       const response = await axios.post<Output>("http://localhost:8000/submit", { code });
-      setOutputContent(outputContent + "\n" + (response.data.stdout ? response.data.stdout : '') + "\n" + (response.data.stderr ? response.data.stderr : ''));
+      setOutputContent(prev => prev + "\n" + (response.data.stdout ? response.data.stdout : '') + "\n" + (response.data.stderr ? response.data.stderr : ''));
       console.log('Output:', response.data.output);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setOutputContent(outputContent + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        setOutputContent(prev => prev + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
         console.error('Axios error:', error.response?.data);
       } else {
         console.error('Unexpected error:', error);
@@ -75,10 +82,12 @@ const App: React.FC = () => {
     }
   };
 
+  // Clear the output buffer
   const handleClearBuffer = () => {
     setOutputContent('');
   };
 
+  // Handle context menu event to show a custom context menu
   const handleContextMenu = (e: React.MouseEvent) => {
     const outputDiv = document.getElementById('output');
     if (outputDiv && outputDiv.contains(e.target as Node)) {
@@ -92,17 +101,20 @@ const App: React.FC = () => {
     }
   };
 
+  // Hide the custom context menu on document click
   const handleDocumentClick = () => {
     const menu = document.getElementById('context-menu');
     if (menu) {
       menu.style.display = 'none';
     }
   };
-  
+
+  // Handle changes in the code editor
   const handleEditorChange = (value: string | undefined) => {
     setCode(value || '');
-  }
+  };
 
+  // Add event listener for document clicks to hide context menu
   React.useEffect(() => {
     document.addEventListener('click', handleDocumentClick);
     return () => {
