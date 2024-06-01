@@ -1,4 +1,4 @@
-# Code Execution Website
+# Online Python Executor
 
 ## Description
 
@@ -16,28 +16,24 @@ Welcome to the Code Execution Website, a platform that allows users to write, te
 
 - **Frontend**:
 
-  - React with Vite/Next.js
+  - React with Next.js
   - TypeScript
-  - Tailwind CSS
-  - Code Editor from preferred npm library
+  - Monaco-Editor
 
 - **Backend**:
   - FastAPI
   - Python 3.11+
-  - SQL Database
-  - Secure code execution environment
+  - SQLite
 
 ### Video Demonstration
 
 [![Video Demo](https://img.youtube.com/vi/VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID_HERE)
 
-> _Upload your demo video and update the link above._
-
 ### Project Structure
 
 The project is organized into a frontend and backend directory, ensuring a clear separation of concerns. Type hints and comments are used throughout the codebase to enhance readability and maintainability.
 
-- **frontend/**: Contains the React application with TypeScript and Tailwind CSS.
+- **frontend/**: Contains the React application with TypeScript.
 - **backend/**: Contains the FastAPI application with Python code for handling requests and executing user-submitted code.
 
 Explore the repository to understand the implementation details and the workflow of the code execution platform.
