@@ -116,3 +116,64 @@ When you submit code to the Code Execution Website, you can utilize the followin
 - **numpy**: Imported as `np`
 
 You can use these built-ins and libraries to enhance your code and perform a variety of operations within the safe execution environment provided by the platform.
+
+### Setup Locally
+
+Follow these steps to set up the project locally on your machine:
+
+Clone the repository:
+
+```bash
+git clone https://github.com/hdave009/PythonCodeExecutor.git
+```
+
+Navigate to the cloned repository:
+
+```bash
+cd PythonCodeExecutor
+```
+
+Start the frontend:
+
+Navigate to the frontend directory:
+
+```bash
+cd frontend
+```
+
+Install dependencies and start the development server:
+
+```bash
+npm install
+npm run dev
+```
+
+In another terminal, navigate to the backend directory:
+
+Open a new terminal window and navigate to the backend directory:
+
+```bash
+cd PythonCodeExecutor/backend
+```
+
+Set up the virtual environment:
+
+Run the setup script to create a virtual environment:
+
+```bash
+./setup_venv.sh
+```
+
+Activate the virtual environment:
+
+```bash
+source venv/bin/activate
+```
+
+Start the backend server:
+
+```bash
+uvicorn server:app
+```
+
+By following these steps, you will have both the frontend and backend servers running locally on your machine.
