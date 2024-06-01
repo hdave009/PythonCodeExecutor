@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, MouseEvent } from 'react';
+import React, { useRef, useState, useEffect, MouseEvent } from 'react';
 import Editor from "@monaco-editor/react";
 import axios from 'axios';
 
@@ -21,6 +21,8 @@ const App: React.FC = () => {
   const [code, setCode] = useState<string>("# Write your code below!\nprint('Hello World!')");
   const [outputHeight, setOutputHeight] = useState<number>(100);
   const [outputContent, setOutputContent] = useState<string>("Read-only output will appear here.");
+  const [executionTime, setExecutionTime] = useState<string | null>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef<boolean>(false);
   const lastY = useRef<number>(0);
 
@@ -53,14 +55,17 @@ const App: React.FC = () => {
   
     try {
       const response = await axios.post<Output>("http://localhost:8000/test", { code });
-      setOutputContent(prev => prev + "\n" + (response.data.stdout ? response.data.stdout + "\n" : '\n') + (response.data.stderr ? response.data.stderr + "\n" : '\n'));
+      setOutputContent(prev => prev.trim() + "\n" + (response.data.stdout ? response.data.stdout.trim() + "\n" : '') + (response.data.stderr ? response.data.stderr.trim() + "\n" : ''));
+      setExecutionTime(response.data.execution_time);
       console.log('Output:', response.data.output);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setOutputContent(prev => prev + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        setOutputContent(prev => prev.trim() + "\n" + (error.response?.data.detail || 'Unknown error').trim() + "\n");
         console.error('Axios error:', error.response?.data);
+        setExecutionTime(null); // Clear the execution time on error
       } else {
         console.error('Unexpected error:', error);
+        setExecutionTime(null); // Clear the execution time on error
       }
     }
   };
@@ -70,14 +75,17 @@ const App: React.FC = () => {
     console.log('Submit button clicked');
     try {
       const response = await axios.post<Output>("http://localhost:8000/submit", { code });
-      setOutputContent(prev => prev + "\n" + (response.data.stdout ? response.data.stdout : '') + "\n" + (response.data.stderr ? response.data.stderr : ''));
+      setOutputContent(prev => prev.trim() + "\n" + (response.data.stdout ? response.data.stdout.trim() : '') + "\n" + (response.data.stderr ? response.data.stderr.trim() : ''));
+      setExecutionTime(response.data.execution_time);
       console.log('Output:', response.data.output);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setOutputContent(prev => prev + "\n" + (error.response?.data.detail || 'Unknown error') + "\n");
+        setOutputContent(prev => prev.trim() + "\n" + (error.response?.data.detail || 'Unknown error').trim() + "\n");
         console.error('Axios error:', error.response?.data);
+        setExecutionTime(null); // Clear the execution time on error
       } else {
         console.error('Unexpected error:', error);
+        setExecutionTime(null); // Clear the execution time on error
       }
     }
   };
@@ -85,6 +93,7 @@ const App: React.FC = () => {
   // Clear the output buffer
   const handleClearBuffer = () => {
     setOutputContent('');
+    setExecutionTime(null);
   };
 
   // Handle context menu event to show a custom context menu
@@ -115,12 +124,19 @@ const App: React.FC = () => {
   };
 
   // Add event listener for document clicks to hide context menu
-  React.useEffect(() => {
+  useEffect(() => {
     document.addEventListener('click', handleDocumentClick);
     return () => {
       document.removeEventListener('click', handleDocumentClick);
     };
   }, []);
+
+  // Scroll to the bottom of the output div whenever outputContent changes
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [outputContent]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} onContextMenu={handleContextMenu}>
@@ -142,12 +158,19 @@ const App: React.FC = () => {
             cursor: 'row-resize',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end', // Right justify the link
+            justifyContent: 'space-between', // Space between the elements
             color: '#fff',
             padding: '0 10px', // Add padding for better spacing
           }}
           onMouseDown={handleMouseDown}
         >
+          {executionTime ? (
+            <span style={{ color: '#fff', fontSize: '12px' }}>
+              Execution Time: {executionTime} seconds
+            </span>
+          ) : (
+            <div style={{ width: '135px' }}></div> // Placeholder div with fixed width
+          )}
           <a
             href="#"
             onClick={(e) => {
@@ -161,6 +184,7 @@ const App: React.FC = () => {
         </div>
         <div
           id="output"
+          ref={outputRef}
           style={{
             height: `${outputHeight}px`,
             position: 'relative',
